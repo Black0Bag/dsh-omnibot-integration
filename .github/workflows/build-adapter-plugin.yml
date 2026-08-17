@@ -1,0 +1,57 @@
+# ============================================================
+# build-adapter-plugin.yml — 编译 TypeScript 适配插件
+#
+# 编译 @omnibot/adapter 插件，运行单元测试，
+# 并将产物上传为 Artifact。
+# ============================================================
+
+name: Build @omnibot/adapter Plugin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/plugins/omnibot-adapter/**'
+      - '.github/workflows/build-adapter-plugin.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/plugins/omnibot-adapter/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: src/plugins/omnibot-adapter
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: src/plugins/omnibot-adapter/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint check
+        run: npx tsc --noEmit
+
+      - name: 🔨 Build TypeScript
+        run: npm run build
+
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnibot-adapter-plugin
+          path: src/plugins/omnibot-adapter/lib/
+          retention-days: 30

@@ -1,0 +1,29 @@
+{
+  "name": "@omnibot/adapter",
+  "version": "0.1.0",
+  "description": "Omnibot Android native tool adapter for DSH (DeepSeek Harness)",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "^1.0.0",
+    "@deepseek-ai/dsh-agent": "^1.0.0",
+    "@deepseek-ai/dsh-tools": "^1.0.0",
+    "@deepseek-ai/schemastery": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0"
+  },
+  "files": [
+    "lib/"
+  ],
+  "cordis": {
+    "id": "omnibot-adapter",
+    "name": "Omnibot Android Adapter",
+    "description": "Bridges DSH agent loop to Android native tools via JNI"
+  }
+}

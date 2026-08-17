@@ -1,0 +1,102 @@
+# ============================================================
+# build-libnode.yml — 编译 libnode.so for Android (ARM64)
+#
+# 在 GitHub Actions 的 ubuntu-latest 上安装 Android NDK，
+# 克隆 Node.js 官方源码，交叉编译 libnode.so 共享库，
+# 并将产物上传为 Artifact 供后续下载使用。
+#
+# 触发条件：
+#   - push 到 main 分支，修改了 scripts/ 或 .github/
+#   - 手动触发 (workflow_dispatch)
+# ============================================================
+
+name: Build libnode.so for Android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build-libnode.sh'
+      - '.github/workflows/build-libnode.yml'
+  workflow_dispatch:
+    inputs:
+      node_version:
+        description: 'Node.js 版本 (git tag)'
+        required: false
+        default: 'v22.12.0'
+      target_arch:
+        description: '目标架构'
+        required: false
+        default: 'arm64'
+
+jobs:
+  build-libnode:
+    name: Build libnode.so (${{ github.event.inputs.target_arch || 'arm64' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27
+          add-to-path: false
+
+      - name: 📦 Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 make ccache
+
+      - name: 📥 Clone Node.js source
+        run: |
+          NODE_VERSION="${{ github.event.inputs.node_version || 'v22.12.0' }}"
+          echo "Cloning Node.js $NODE_VERSION..."
+          git clone --depth 1 --branch "$NODE_VERSION" \
+            https://github.com/nodejs/node.git src/node-source
+
+      - name: ⚙️ Configure android-configure
+        run: |
+          export ANDROID_NDK_HOME="${{ steps.setup-ndk.outputs.ndk-path }}"
+          echo "NDK path: $ANDROID_NDK_HOME"
+          cd src/node-source
+          ./android-configure "$ANDROID_NDK_HOME" "${{ github.event.inputs.target_arch || 'arm64' }}" \
+            --shared \
+            --without-npm \
+            --without-intl \
+            --with-arm64
+
+      - name: 🔨 Build libnode.so
+        run: |
+          cd src/node-source
+          make -j$(nproc) 2>&1 | tee build.log
+
+      - name: 📦 Verify artifact
+        run: |
+          LIBNODE="src/node-source/out/Release/lib.target/libnode.so"
+          if [ -f "$LIBNODE" ]; then
+            file "$LIBNODE"
+            ls -lh "$LIBNODE"
+            echo "✅ libnode.so 编译成功!"
+          else
+            echo "❌ libnode.so 未找到!"
+            exit 1
+          fi
+
+      - name: 📤 Upload libnode.so artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libnode-android-${{ github.event.inputs.target_arch || 'arm64' }}
+          path: src/node-source/out/Release/lib.target/libnode.so
+          retention-days: 30
+
+      - name: 📤 Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: src/node-source/build.log
+          retention-days: 7

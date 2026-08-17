@@ -1,0 +1,29 @@
+# Node.js 源码 (第三方依赖，由 CI/build-libnode.sh 自动克隆)
+src/node-source/
+
+# 编译产物
+out/
+*.so
+*.o
+*.a
+
+# Node.js / TypeScript
+node_modules/
+lib/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android
+local.properties
+*.apk
+*.aab
+
+# macOS
+.DS_Store
+
+# 日志
+*.log
