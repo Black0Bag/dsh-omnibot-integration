@@ -78,27 +78,8 @@ echo "📦 步骤 1/2: 配置交叉编译环境并编译"
 cd "$NODE_SOURCE_DIR"
 
 # android-configure 设置交叉编译环境: <NDK路径> <SDK版本> <目标架构>
-# 它会设置 CC/CXX/GYP_DEFINES 并调用 ./configure --dest-cpu=... --dest-os=android
+# 它会自动调用 ./configure --dest-cpu=... --dest-os=android
 ./android-configure "$ANDROID_NDK_HOME" "34" "$DEST_CPU"
-
-# 保存 GYP_DEFINES (包含 android_ndk_path 等关键变量)
-GYP_DEFINES_SAVED="${GYP_DEFINES}"
-
-# 重新运行 ./configure 但保留 GYP_DEFINES
-# 额外添加 --shared (编译为共享库 libnode.so)
-# --without-npm (不编译 npm, 减少体积)
-# --without-intl (不编译 ICU, 减少体积 ~20MB)
-./configure \
-    --shared \
-    --without-npm \
-    --without-intl \
-    --dest-cpu="$DEST_CPU" \
-    --dest-os=android \
-    --openssl-no-asm \
-    --cross-compiling
-
-# 修复 GYP_DEFINES
-export GYP_DEFINES="${GYP_DEFINES_SAVED}"
 
 echo ""
 echo "🔧 步骤 2/2: 开始编译 (这可能需要 10-30 分钟)"
