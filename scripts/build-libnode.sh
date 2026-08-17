@@ -78,19 +78,24 @@ echo "📦 步骤 1/3: 配置交叉编译环境"
 cd "$NODE_SOURCE_DIR"
 
 # 配置编译选项
+# android-configure 设置交叉编译环境: <NDK路径> <SDK版本> <目标架构>
+./android-configure "$ANDROID_NDK_HOME" "34" "$DEST_CPU"
+
+echo ""
+echo "🔧 步骤 2/4: 配置 Node.js 编译选项"
+
 # --shared: 编译为共享库 (libnode.so)
-# --dest-cpu: 目标 CPU 架构
-# --dest-os: 目标操作系统
 # --without-npm: 不编译 npm (减少体积)
 # --without-intl: 不编译 ICU (减少体积，约 20MB)
-./android-configure "$ANDROID_NDK_HOME" "$DEST_CPU" \
+./configure \
     --shared \
     --without-npm \
     --without-intl \
-    --with-arm64
+    --dest-cpu="$DEST_CPU" \
+    --dest-os=android
 
 echo ""
-echo "🔧 步骤 2/3: 开始编译 (这可能需要 10-30 分钟)"
+echo "🔧 步骤 3/4: 开始编译 (这可能需要 10-30 分钟)"
 make -j$(nproc) 2>&1 | tee build.log
 
 echo ""

@@ -58,16 +58,27 @@ jobs:
           git clone --depth 1 --branch "$NODE_VERSION" \
             https://github.com/nodejs/node.git src/node-source
 
-      - name: ⚙️ Configure android-configure
+      - name: ⚙️ Configure android-configure (cross-compile setup)
         run: |
           export ANDROID_NDK_HOME="${{ steps.setup-ndk.outputs.ndk-path }}"
           echo "NDK path: $ANDROID_NDK_HOME"
           cd src/node-source
-          ./android-configure "$ANDROID_NDK_HOME" "${{ github.event.inputs.target_arch || 'arm64' }}" \
+          # android-configure 只需设置交叉编译环境，3个参数：
+          #   <NDK路径> <Android SDK版本> <目标架构>
+          ./android-configure "$ANDROID_NDK_HOME" "34" "${{ github.event.inputs.target_arch || 'arm64' }}"
+
+      - name: ⚙️ Configure Node.js build options
+        run: |
+          cd src/node-source
+          # --shared: 编译为共享库 libnode.so
+          # --without-npm: 不编译 npm (减少体积)
+          # --without-intl: 不编译 ICU (减少体积 ~20MB)
+          ./configure \
             --shared \
             --without-npm \
             --without-intl \
-            --with-arm64
+            --dest-cpu="${{ github.event.inputs.target_arch || 'arm64' }}" \
+            --dest-os=android
 
       - name: 🔨 Build libnode.so
         run: |
