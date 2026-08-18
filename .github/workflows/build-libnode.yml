@@ -33,7 +33,7 @@ jobs:
   build-libnode:
     name: Build libnode.so (${{ github.event.inputs.target_arch || 'arm64' }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: 📥 Checkout repository
